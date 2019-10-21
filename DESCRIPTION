@@ -1,0 +1,13 @@
+Package: mlpcr
+Type: Package
+Title: Maximum Likelihood Principal Components Regression
+Version: 0.1
+Date: 2019-10-18
+Author: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
+Maintainer: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
+Description: Fits a principal components regression model for jointly normal responses and predictors.
+License: MIT + file LICENSE
+Imports: Rcpp (>= 1.0.0), MASS
+LinkingTo: Rcpp, RcppArmadillo
+Encoding: UTF-8
+RoxygenNote: 6.1.1
