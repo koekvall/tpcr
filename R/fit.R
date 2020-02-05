@@ -1,4 +1,15 @@
-#' Fit principal components regression using a jointly normal likelihood
+#' Joint Likelihood Principal Components Regression
+#' 
+#' \code{jlpcr} fits a principal components regression by maximizing the joint likelihood 
+#'  of multivariate normal responses and predictors.
+#' 
+#' This is the only function exported from the package with the same name. 
+#' The likelihood maximized is that for n independent observations 
+#' from a normal multivariate response linear regression model where the column space
+#' of the p-by-r coefficient matrix is spanned by the k leading eigenvectors (corresponding to
+#' the largest eigenvalues) of the predictors' covariance matrix.
+#' This covariance matrix is assumed to be spiked, meaning its
+#' smallest eigenvalue has multiplicity p - k.
 #'
 #' @param Y n x r matrix of responses
 #' @param X n x p matrix of predictors
@@ -10,13 +21,13 @@
 #' @param scale If TRUE, divide each column in X by its sample standard deviation
 #' @param quiet If FALSE, print information from L-BFGS-B algorithm
 #' @param L Starting value in L-BFGS-B for the Cholesky root
-#'          in the decomposition Sigma_X = tau (I_p + LL^T)
+#'          in the decomposition Sigma_X = tau (I + LL')
 #' @return List with estimates:
-#'          beta (regression coefficient)
-#'          Sigma (response covariance matrix)
-#'          Sigma_X (predictor covariance matrix)
-#'          L (Cholesky root in decomposition of Sigma_X)
-#'          tau (smallest eigenvalue of Sigma_X; has multiplicity p - k)
+#'          beta (regression coefficient),
+#'          Sigma (response covariance matrix),
+#'          Sigma_X (predictor covariance matrix),
+#'          L (Cholesky root in decomposition Sigma_X = tau[I + LL']), and
+#'          tau (smallest eigenvalue of Sigma_X; has multiplicity p - k).
 #' @useDynLib jlpcr, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importFrom Rcpp evalCpp
