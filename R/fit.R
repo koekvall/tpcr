@@ -1,4 +1,4 @@
-#' Fit Principal Components Regression using the jointly normal likelihood
+#' Fit principal components regression using a jointly normal likelihood
 #'
 #' @param Y An n x r matrix of responses.
 #' @param X An n x p matrix of predictors
