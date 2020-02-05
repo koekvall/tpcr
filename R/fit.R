@@ -26,6 +26,10 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, qui
   n <- nrow(X)
   r <- ncol(Y)
   
+  if(n < p & rho == 0){
+    warning("The objective function is unbounded when n < p and rho = 0; do not expect reliable estimates!")
+  }
+  
   if(center){
     X <- scale(X, scale = F)
     Y <- scale(Y, scale = F)
