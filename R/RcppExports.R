@@ -9,7 +9,3 @@ jac_rcpp <- function(L, Y, X, rho) {
     .Call(`_jlpcr_jac_rcpp`, L, Y, X, rho)
 }
 
-chol_lr <- function(A, tol) {
-    .Call(`_jlpcr_chol_lr`, A, tol)
-}
-

@@ -92,39 +92,39 @@ arma::mat jac_rcpp(arma::mat L, arma::mat Y, arma::mat X, double rho)
   return J;
 }
 
-// [[Rcpp::export]]
-arma::mat chol_lr(arma::mat A, double tol)
-{
-  // Low rank Cholesky factorization of Canto et al. (2015)
-  const int m = A.n_cols;
-  arma::mat L(m, m, arma::fill::zeros);
-  arma::ivec c(m, arma::fill::zeros);
-  int c_length = 1;
-  int count = 0;
-  int r = 1;
-  L(0, 0) = std::sqrt(A(0, 0));
-  
-  for(int ii = 1; ii < m; ii++){
-    int idx = ii - count - 1;
-    for(int jj = 0; jj <= idx; jj++){
-      L(ii, jj) = A(ii, c(jj));
-      if(jj > 0){
-        arma::mat l1 = L.submat(c(jj), 0, c(jj), jj - 1);
-        arma::mat l2 = L.submat(ii, 0, ii, jj - 1);
-        L(ii, jj) -= arma::accu(l1 % l2);
-      }
-      L(ii, jj) *= (1.0 / L(c(jj), jj));
-    }
-  double v = std::sqrt(A(ii, ii) - arma::accu(
-              arma::square(L.submat(ii, 0, ii, idx))));
-    if(abs(v) <= tol){
-      count += 1;
-    } else{
-      L(ii, ii - count) = v;
-      c(c_length) = ii;
-      c_length += 1;
-      r += 1;
-    }
-  }
-  return L.cols(0, r - 1);
-}
+// // [[Rcpp::export]]
+// arma::mat chol_lr(arma::mat A, double tol)
+// {
+//   // Low rank Cholesky factorization of Canto et al. (2015)
+//   const int m = A.n_cols;
+//   arma::mat L(m, m, arma::fill::zeros);
+//   arma::ivec c(m, arma::fill::zeros);
+//   int c_length = 1;
+//   int count = 0;
+//   int r = 1;
+//   L(0, 0) = std::sqrt(A(0, 0));
+//   
+//   for(int ii = 1; ii < m; ii++){
+//     int idx = ii - count - 1;
+//     for(int jj = 0; jj <= idx; jj++){
+//       L(ii, jj) = A(ii, c(jj));
+//       if(jj > 0){
+//         arma::mat l1 = L.submat(c(jj), 0, c(jj), jj - 1);
+//         arma::mat l2 = L.submat(ii, 0, ii, jj - 1);
+//         L(ii, jj) -= arma::accu(l1 % l2);
+//       }
+//       L(ii, jj) *= (1.0 / L(c(jj), jj));
+//     }
+//   double v = std::sqrt(A(ii, ii) - arma::accu(
+//               arma::square(L.submat(ii, 0, ii, idx))));
+//     if(abs(v) <= tol){
+//       count += 1;
+//     } else{
+//       L(ii, ii - count) = v;
+//       c(c_length) = ii;
+//       c_length += 1;
+//       r += 1;
+//     }
+//   }
+//   return L.cols(0, r - 1);
+// }

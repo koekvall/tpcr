@@ -34,23 +34,10 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// chol_lr
-arma::mat chol_lr(arma::mat A, double tol);
-RcppExport SEXP _jlpcr_chol_lr(SEXP ASEXP, SEXP tolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(chol_lr(A, tol));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_jlpcr_obj_rcpp", (DL_FUNC) &_jlpcr_obj_rcpp, 4},
     {"_jlpcr_jac_rcpp", (DL_FUNC) &_jlpcr_jac_rcpp, 4},
-    {"_jlpcr_chol_lr", (DL_FUNC) &_jlpcr_chol_lr, 2},
     {NULL, NULL, 0}
 };
 
