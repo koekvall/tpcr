@@ -2,38 +2,51 @@
 % Please edit documentation in R/fit.R
 \name{jlpcr}
 \alias{jlpcr}
-\title{Fit Principal Components Regression using the jointly normal likelihood}
+\title{Fit principal components regression using a jointly normal likelihood}
 \usage{
-jlpcr(Y, X, k, rho = 0, tol = 1e-10, maxit = 1000, center = TRUE,
-  quiet = TRUE, L)
+jlpcr(
+  Y,
+  X,
+  k,
+  rho = 0,
+  tol = 1e-10,
+  maxit = 1000,
+  center = TRUE,
+  scale = FALSE,
+  quiet = TRUE,
+  L
+)
 }
 \arguments{
-\item{Y}{An n x r matrix of responses.}
+\item{Y}{n x r matrix of responses}
 
-\item{X}{An n x p matrix of predictors}
+\item{X}{n x p matrix of predictors}
 
 \item{k}{Number of principal components to use}
 
 \item{rho}{Ridge penalty on alpha in representation beta = L alpha}
 
-\item{tol}{The tolerance for L-BFGS-G algorithm used on profile likelihood}
+\item{tol}{Tolerance for L-BFGS-B on profile likelihood}
 
-\item{maxit}{The maximum number of iterations of L-BFGS-G algorithm}
+\item{maxit}{Maximum number of iterations of L-BFGS-B algorithm}
 
 \item{center}{If TRUE, responses and predictors are centered by their sample mean}
 
-\item{quiet}{If FALSE, print print information from L-BFGS-G algorithm}
+\item{scale}{If TRUE, divide each column in X by its sample standard deviation}
 
-\item{L}{Starting value for the Cholesky root in the decomposition
-Sigma_X = tau (I_p + LL^T)}
+\item{quiet}{If FALSE, print information from L-BFGS-B algorithm}
+
+\item{L}{Starting value in L-BFGS-B for the Cholesky root
+in the decomposition Sigma_X = tau (I_p + LL^T)}
 }
 \value{
-List with estimates of beta (regression coefficient),
-        Sigma (response covariance matrix),
-        Sigma_X (predictor covariance matrix),
-        L (Cholesky root in decomposition of Sigma_X), and 
-        tau (smallest eigenvalue of Sigma_X; has multiplicity p - k)
+List with estimates:
+         beta (regression coefficient)
+         Sigma (response covariance matrix)
+         Sigma_X (predictor covariance matrix)
+         L (Cholesky root in decomposition of Sigma_X)
+         tau (smallest eigenvalue of Sigma_X; has multiplicity p - k)
 }
 \description{
-Fit Principal Components Regression using the jointly normal likelihood
+Fit principal components regression using a jointly normal likelihood
 }
