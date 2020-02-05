@@ -1,4 +1,25 @@
-jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = FALSE, quiet = TRUE, L)
+#' Fit Principal Components Regression using the jointly normal likelihood
+#'
+#' @param Y An n x r matrix of responses.
+#' @param X An n x p matrix of predictors
+#' @param k Number of principal components to use
+#' @param rho Ridge penalty on alpha in representation beta = L alpha
+#' @param tol The tolerance for L-BFGS-G algorithm used on profile likelihood
+#' @param maxit The maximum number of iterations of L-BFGS-G algorithm
+#' @param center If TRUE, responses and predictors are centered by their sample mean
+#' @param quiet If FALSE, print print information from L-BFGS-G algorithm
+#' @param L Starting value for the Cholesky root in the decomposition
+#'          Sigma_X = tau (I_p + LL^T)
+#' @return List with estimates of beta (regression coefficient),
+#'         Sigma (response covariance matrix),
+#'         Sigma_X (predictor covariance matrix),
+#'         L (Cholesky root in decomposition of Sigma_X), and 
+#'         tau (smallest eigenvalue of Sigma_X; has multiplicity p - k)
+#' @useDynLib jlpcr, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+#' @importFrom Rcpp evalCpp
+#' @export
+jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, quiet = TRUE, L)
 {
   # Define constants
   p <- ncol(X)
