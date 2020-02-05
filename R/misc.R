@@ -11,7 +11,7 @@ chol_spsd <- function(A, tol = 1e-15)
       L[ii, jj] <- (A[ii, d[jj]] - sum(L[d[jj], 1:(jj - 1)] * L[ii, 1:(jj - 1)])) / L[d[jj], jj]
     }
     v <- sqrt(abs(A[ii, ii] - sum(L[ii, 1:(ii - counter - 1)]^2)))
-    if(v^2 <= tol){
+    if(abs(v) <= tol){
       counter <- counter + 1
     }else{
       L[ii, ii - counter] <- v

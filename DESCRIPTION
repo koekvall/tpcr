@@ -1,11 +1,11 @@
-Package: mlpcr
+Package: jlpcr
 Type: Package
-Title: Maximum Likelihood Principal Components Regression
+Title: Joint Likelihood Principal Components Regression
 Version: 0.1
-Date: 2019-10-18
+Date: 2020-02-05
 Author: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
 Maintainer: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
-Description: Fits a principal components regression model for jointly normal responses and predictors.
+Description: Fits a principal components regression model using the jointly normal likelihood.
 License: MIT + file LICENSE
 Imports: Rcpp (>= 1.0.0), MASS
 LinkingTo: Rcpp, RcppArmadillo

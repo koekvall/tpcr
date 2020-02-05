@@ -1,2 +1,2 @@
 importFrom(Rcpp, evalCpp)
-useDynLib(mlpcr, .registration = TRUE)
+useDynLib(jlpcr, .registration = TRUE)

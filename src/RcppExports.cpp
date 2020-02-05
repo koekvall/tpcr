@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // obj_rcpp
 double obj_rcpp(arma::mat L, arma::mat Y, arma::mat X, double rho);
-RcppExport SEXP _mlpcr_obj_rcpp(SEXP LSEXP, SEXP YSEXP, SEXP XSEXP, SEXP rhoSEXP) {
+RcppExport SEXP _jlpcr_obj_rcpp(SEXP LSEXP, SEXP YSEXP, SEXP XSEXP, SEXP rhoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,7 +22,7 @@ END_RCPP
 }
 // jac_rcpp
 arma::mat jac_rcpp(arma::mat L, arma::mat Y, arma::mat X, double rho);
-RcppExport SEXP _mlpcr_jac_rcpp(SEXP LSEXP, SEXP YSEXP, SEXP XSEXP, SEXP rhoSEXP) {
+RcppExport SEXP _jlpcr_jac_rcpp(SEXP LSEXP, SEXP YSEXP, SEXP XSEXP, SEXP rhoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,14 +34,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// chol_lr
+arma::mat chol_lr(arma::mat A, double tol);
+RcppExport SEXP _jlpcr_chol_lr(SEXP ASEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(chol_lr(A, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mlpcr_obj_rcpp", (DL_FUNC) &_mlpcr_obj_rcpp, 4},
-    {"_mlpcr_jac_rcpp", (DL_FUNC) &_mlpcr_jac_rcpp, 4},
+    {"_jlpcr_obj_rcpp", (DL_FUNC) &_jlpcr_obj_rcpp, 4},
+    {"_jlpcr_jac_rcpp", (DL_FUNC) &_jlpcr_jac_rcpp, 4},
+    {"_jlpcr_chol_lr", (DL_FUNC) &_jlpcr_chol_lr, 2},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_mlpcr(DllInfo *dll) {
+RcppExport void R_init_jlpcr(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
