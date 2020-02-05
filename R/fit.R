@@ -35,7 +35,7 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, qui
     Y <- scale(Y, scale = F)
   }
   
-  if(k >= min(n, p)) stop("JLPCR requires k < min(n, p)")
+  if(k >= min(n, p)) stop("jlpcr requires k < min(n, p)")
   if(missing(L)){
     # Use probabilistic principal components estimates
     e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
