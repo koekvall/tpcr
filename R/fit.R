@@ -7,6 +7,7 @@
 #' @param tol Tolerance for L-BFGS-B on profile likelihood
 #' @param maxit Maximum number of iterations of L-BFGS-B algorithm
 #' @param center If TRUE, responses and predictors are centered by their sample mean
+#' @param scale If TRUE, divide each column in X by its sample standard deviation
 #' @param quiet If FALSE, print information from L-BFGS-B algorithm
 #' @param L Starting value in L-BFGS-B for the Cholesky root
 #'          in the decomposition Sigma_X = tau (I_p + LL^T)
@@ -20,7 +21,8 @@
 #' @importFrom Rcpp sourceCpp
 #' @importFrom Rcpp evalCpp
 #' @export
-jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, quiet = TRUE, L)
+jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE,
+  scale = FALSE, quiet = TRUE, L)
 {
   # Define constants
   p <- ncol(X)
