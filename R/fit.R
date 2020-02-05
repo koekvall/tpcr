@@ -4,13 +4,13 @@
 #' @param X n x p matrix of predictors
 #' @param k Number of principal components to use
 #' @param rho Ridge penalty on alpha in representation beta = L alpha
-#' @param tol Tolerance for L-BFGS-G on profile likelihood
-#' @param maxit Maximum number of iterations of L-BFGS-G algorithm
+#' @param tol Tolerance for L-BFGS-B on profile likelihood
+#' @param maxit Maximum number of iterations of L-BFGS-B algorithm
 #' @param center If TRUE, responses and predictors are centered by their sample mean
-#' @param quiet If FALSE, print information from L-BFGS-G algorithm
+#' @param quiet If FALSE, print information from L-BFGS-B algorithm
 #' @param L Starting value in L-BFGS-B for the Cholesky root
 #'          in the decomposition Sigma_X = tau (I_p + LL^T)
-#' @return List with estimates: 
+#' @return List with estimates:
 #'          beta (regression coefficient)
 #'          Sigma (response covariance matrix)
 #'          Sigma_X (predictor covariance matrix)
@@ -26,21 +26,21 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, qui
   p <- ncol(X)
   n <- nrow(X)
   r <- ncol(Y)
-  
+
   if(n < p & rho == 0){
     warning("The objective function is unbounded when n < p and rho = 0; do not expect reliable estimates!")
   }
-  
+
   if(center){
     X <- scale(X, scale = F)
     Y <- scale(Y, scale = F)
   }
-  
+
   if(k >= min(n, p)) stop("jlpcr requires k < min(n, p)")
   if(missing(L)){
     # Use probabilistic principal components estimates
     e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
-    
+
     U <- e_S$vectors[, 1:k, drop = F]
     tau <- mean(e_S$values[(k + 1):p])
     D <- e_S$values[1:k] / tau - 1
@@ -63,7 +63,7 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center = TRUE, qui
   tau <- tau / (n * p)
 
   beta <-  L %*% alpha
-  
+
   return(list(beta = beta,
               Sigma = Sigma, Sigma_X = tau * (diag(1, p) + tcrossprod(L)),
               L = L, tau = tau))
