@@ -1,4 +1,4 @@
-chol_spsd <- function(A, tol = 1e-15)
+chol_spsd <- function(A, tol = 1e-8)
 {
   m <- ncol(A)
   L <- matrix(0, m, m)
