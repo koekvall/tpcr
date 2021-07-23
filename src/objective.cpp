@@ -67,7 +67,7 @@ arma::mat jac_rcpp(arma::mat L, arma::mat Y, arma::mat X, double rho)
   arma::mat V2;
   arma::vec s2;
   arma::svd_econ(U2, s2, V2, L);
-  s2 %= s2; // Replace by eigenvalues of LL'
+  s2 = s2 % s2; // Replace by eigenvalues of LL'
   arma::mat Inv = -U2 * arma::diagmat(s2 / (1.0 + s2)) * U2.t();
   Inv.diag() += 1.0;
   J += 2.0 * L.t() * Inv;

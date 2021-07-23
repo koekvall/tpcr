@@ -1,6 +1,6 @@
-#' Joint Likelihood Principal Components Regression
+#' Targeted Principal Components Regression
 #' 
-#' \code{jlpcr} fits a principal components regression by maximizing the joint likelihood 
+#' \code{tpcr} fits a principal components regression by maximizing the joint likelihood 
 #'  of multivariate normal responses and predictors.
 #' 
 #' This is the only function exported from the package with the same name. 
@@ -37,14 +37,14 @@
 #'          IC (information criterion).
 #'          
 #'         If length(k) > 1, returns a list of lists of length k + 1 where for
-#'         j in 1:k the jth element is the list returned by jlpcr with k = k[j]
+#'         j in 1:k the jth element is the list returned by tpcr with k = k[j]
 #'         and the (k + 1)th element is a vector of the same length as m where
 #'         the jth element is the k selected by the IC corresponding to m[j].
-#' @useDynLib jlpcr, .registration = TRUE
+#' @useDynLib tpcr, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importFrom Rcpp evalCpp
 #' @export
-jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
+tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   mean_X = TRUE, scale = FALSE, quiet = TRUE, L, m = 2)
 {
   Y <- as.matrix(Y)
@@ -72,7 +72,7 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   
   if(scale) X <- scale(X, center = F)
   
-  if(max(k) >= min(n, p)) stop("jlpcr requires k < min(n, p)")
+  if(max(k) >= min(n, p)) stop("tpcr requires k < min(n, p)")
   if(missing(L)){
     # Use probabilistic principal components estimates
     e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
@@ -96,7 +96,7 @@ jlpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
     out_list <- list()
     ii <- 1
     for(k_i in k){
-      out_list[[ii]] <- jlpcr(Y = Y, X = X, k = k_i, rho = rho, tol = tol,
+      out_list[[ii]] <- tpcr(Y = Y, X = X, k = k_i, rho = rho, tol = tol,
                               maxit = maxit, mean_Y = mean_Y, mean_X = mean_X,
                               scale = scale, quiet = quiet, L = L, m = m)
       
