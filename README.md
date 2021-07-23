@@ -10,7 +10,7 @@ install.packages("devtools")
 devtools::install_github("koekvall/tpcr")
 ```
 # Citation
-The corresponding paper Targeted Principal Components Regression is on [arXiv](https://arxiv.org/abs/2004.14009). 
+The corresponding paper is on [arXiv](https://arxiv.org/abs/2004.14009). 
 
 A bibtex entry is
 
