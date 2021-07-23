@@ -10,4 +10,15 @@ install.packages("devtools")
 devtools::install_github("koekvall/tpcr")
 ```
 # Citation
-Please contact `k.o.ekvall@gmail.com` for citation directions. 
+The corresponding paper Targeted Principal Components Regression is on [arXiv](https://arxiv.org/abs/2004.14009). 
+
+A bibtex entry is
+
+@misc{ekvall2021targeted,
+      title={Targeted Principal Components Regression}, 
+      author={Karl Oskar Ekvall},
+      year={2021},
+      eprint={2004.14009},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME}
+}
