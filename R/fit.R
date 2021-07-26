@@ -17,24 +17,26 @@
 #' @param rho Numeric ridge penalty on alpha in representation beta = L alpha
 #' @param tol Numeric tolerance for L-BFGS-B on profile log-likelihood
 #' @param maxit Integer maximum number of iterations of L-BFGS-B algorithm
-#' @param mean_Y Bool indicating the mean of Y should be a parameter; if FALSE,
-#'               it is assumed E(Y) = 0.
-#' @param mean_X Bool indicating the mean of X should be a parameter; if FALSE,
-#'               it is assumed E(X) = 0.           
-#' @param scale Bool indicating each predictor is divided by its sample
-#'              standard deviation
-#' @param quiet Bool indicating no information printed from L-BFGS-B algorithm
+#' @param mean_Y If TRUE, the mean of Y is estimated; otherwise it's assumed
+#'               zero.
+#' @param mean_X If TRUE, the mean of X is estimated; otherwise it's assumed
+#'               zero.         
+#' @param scale If TRUE, each predictor is scaled by 1 / sample standard
+#'              deviation.
+#' @param quiet If TRUE, suppresses information from optim (L-BFGS-B)
 #' @param L Matrix (p x k) starting value in L-BFGS-B for the Cholesky root
 #'          in the decomposition Sigma_X = tau (I + LL')
 #' @param m Numeric penalty in information criterion
 #'          - 2 * log-likelihood + m * n_params; can be a vector
+#' @param covmat If TRUE, calculates asymptotic covariance matrix of vec(beta)
 #' @return If length(k) = 1, returns a list with estimates:
 #'          beta (regression coefficient),
 #'          Sigma (response covariance matrix),
 #'          Sigma_X (predictor covariance matrix),
 #'          L (Cholesky root in decomposition Sigma_X = tau[I + LL']),
-#'          tau (smallest eigenvalue of Sigma_X; has multiplicity p - k), and
-#'          IC (information criterion).
+#'          tau (smallest eigenvalue of Sigma_X; has multiplicity p - k),
+#'          IC (information criterion), and
+#'          C (covariance matrix of vectorization of beta estimator).
 #'          
 #'         If length(k) > 1, returns a list of lists of length k + 1 where for
 #'         j in 1:k the jth element is the list returned by tpcr with k = k[j]
@@ -45,7 +47,7 @@
 #' @importFrom Rcpp evalCpp
 #' @export
 tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
-  mean_X = TRUE, scale = FALSE, quiet = TRUE, L, m = 2)
+  mean_X = TRUE, scale = FALSE, quiet = TRUE, L, m = 2, covmat = TRUE)
 {
   Y <- as.matrix(Y)
   X <- as.matrix(X)
@@ -132,7 +134,7 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   beta <-  L %*% alpha
   Sigma_X <- tau * (diag(1, p) + tcrossprod(L))
   
-  n_param <- r * (r + 1) / 2 # Cond covmat
+  n_param <- r * (r + 1) / 2 # Error cov. mat.
   n_param <- n_param + k * r # alpha
   n_param <- n_param + 1 # tau
   n_param <- n_param + k + k * p - k * (k + 1) / 2 #SPSD rank k
@@ -144,7 +146,14 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   IC <- IC + sum(mvtnorm::dmvnorm(X, sigma = Sigma_X, log = T))
   IC <- -2 * IC + m * n_param
   
+  # Asy. Cov.
+  C <- matrix(NA, r*p, r*p)
+  if(covmat){
+    P <- tcrossprod(svd(L)$u)
+    C <-  kronecker(Sigma, P %*% qr.solve(Sigma_X, P))
+  }
+  
   return(list(mu_Y = mu_Y, mu_X = mu_X, beta = beta,
               Sigma = Sigma, Sigma_X = tau * (diag(1, p) + tcrossprod(L)),
-              L = L, tau = tau, IC = IC))
+              L = L, tau = tau, IC = IC, C = C))
 }

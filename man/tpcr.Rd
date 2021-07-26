@@ -16,7 +16,8 @@ tpcr(
   scale = FALSE,
   quiet = TRUE,
   L,
-  m = 2
+  m = 2,
+  covmat = TRUE
 )
 }
 \arguments{
@@ -32,22 +33,24 @@ tpcr(
 
 \item{maxit}{Integer maximum number of iterations of L-BFGS-B algorithm}
 
-\item{mean_Y}{Bool indicating the mean of Y should be a parameter; if FALSE,
-it is assumed E(Y) = 0.}
+\item{mean_Y}{If TRUE, the mean of Y is estimated; otherwise it's assumed
+zero.}
 
-\item{mean_X}{Bool indicating the mean of X should be a parameter; if FALSE,
-it is assumed E(X) = 0.}
+\item{mean_X}{If TRUE, the mean of X is estimated; otherwise it's assumed
+zero.}
 
-\item{scale}{Bool indicating each predictor is divided by its sample
-standard deviation}
+\item{scale}{If TRUE, each predictor is scaled by 1 / sample standard
+deviation.}
 
-\item{quiet}{Bool indicating no information printed from L-BFGS-B algorithm}
+\item{quiet}{If TRUE, suppresses information from optim (L-BFGS-B)}
 
 \item{L}{Matrix (p x k) starting value in L-BFGS-B for the Cholesky root
 in the decomposition Sigma_X = tau (I + LL')}
 
 \item{m}{Numeric penalty in information criterion
 - 2 * log-likelihood + m * n_params; can be a vector}
+
+\item{covmat}{If TRUE, calculates asymptotic covariance matrix of vec(beta)}
 }
 \value{
 If length(k) = 1, returns a list with estimates:
@@ -55,8 +58,9 @@ If length(k) = 1, returns a list with estimates:
          Sigma (response covariance matrix),
          Sigma_X (predictor covariance matrix),
          L (Cholesky root in decomposition Sigma_X = tau[I + LL']),
-         tau (smallest eigenvalue of Sigma_X; has multiplicity p - k), and
-         IC (information criterion).
+         tau (smallest eigenvalue of Sigma_X; has multiplicity p - k),
+         IC (information criterion), and
+         C (covariance matrix of vectorization of beta estimator).
          
         If length(k) > 1, returns a list of lists of length k + 1 where for
         j in 1:k the jth element is the list returned by tpcr with k = k[j]
@@ -64,8 +68,8 @@ If length(k) = 1, returns a list with estimates:
         the jth element is the k selected by the IC corresponding to m[j].
 }
 \description{
-\code{tpcr} fits a principal components regression by maximizing the joint likelihood 
- of multivariate normal responses and predictors.
+\code{tpcr} fits a principal components regression by maximizing a joint
+ multivariate normal pseud-likelihood.
 }
 \details{
 This is the only function exported from the package with the same name. 
