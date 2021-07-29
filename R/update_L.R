@@ -9,7 +9,6 @@ update_L <- function(L, Y, X, rho, tol, maxit, quiet)
     positive_idx <- c(positive_idx, 1 + cumsum(p:(p - k + 2)))  
   }
   
-  
   obj_f <- function(x){
     L2 <- matrix(0, nrow = p, ncol = k)
     L2[lower.tri(L2, diag = TRUE)] <- x

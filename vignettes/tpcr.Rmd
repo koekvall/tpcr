@@ -1,0 +1,35 @@
+---
+title: "Targeted Principal Components Regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+# Model
+
+Suppose that, independently for $i = 1, \dots, n$, a response vector $Y_i \in \mathbb{R}^r$ and predictor vector $X_i \in \mathbb{R}^p$ satisfy, for some unknown matrix $\beta \in \mathbb{R}^{p\times r}$ of regression coefficients,
+\[
+  Y_i - \mu_Y =  \beta' (X_i - \mu_X) + \varepsilon_i,
+\]
+where $\varepsilon_i$ is i.i.d. with mean zero and covariance matrix $\Sigma$, $Y_i$ has mean $\mu_Y$, and $X_i$ has mean $\mu_X$. Suppose also the $X_i$ have common covariance matrix $\Sigma_X = \Psi + \tau I_p$ for some $p\times p$ positive semi-definite $\Psi$ with rank $k < p$ and $\tau > 0$, and that $\beta = \Psi\gamma$ for some $\gamma \in \mathbb{R}^{p\times r}$. That is, $\Sigma_X$ is spiked and the columns of $\beta$ lie in the column space of $\Psi$. Because $\Sigma_X$ is spiked, the columns of $\beta$ lie in the span of the $k$ leading eigenvectors of $\Sigma_X$. 
+
+It is common to use standardized data. Then, the model is assumed to hold with $Y_i - \mu_Y$ and $X_i - \mu_X$ replaced by, respectively, $D_Y^{-1}(Y_i - \mu_Y)$ and $D_X^{-1}(X_i - \mu_X)$, where $D_Y$ and $D_X$ are scaling matrices. Assuming momentarily these are fixed, the model becomes
+\[
+  D_Y^{-1}(Y_i - \mu) = \beta' D_{X}^{-1}(X_i - \mu_X) + \varepsilon_i \iff (Y_i - \mu) = D_Y\beta' D_{X}^{-1}(X_i - \mu_X) + D_Y \varepsilon_i
+\]
+
+Thus, if $\tilde{beta}$, $\tilde{\Sigma}$, and $\tilde{\Sigma}_X$ are estimates from fitting the model with standardized data, estimates on the original scale can be obtained as $\hat{\beta} = D_X^{-1}\tilde{\beta} D_Y$, $\hat{\Sigma} = D_Y \tilde{\Sigma} D_Y$, and $\hat{\Sigma}_X = D_X \Sigma_X D_X$. Note, however, that this in general does not give a spiked $\hat{\Sigma}_X$.
+
+The package <tt>tpcr</tt> fits the parameters of this model using a multivariate normal likelihood. The estimates of $\mu_Y$ and $mu_X$ are $\bar{Y} = n^{-1}\sum_{i = 1}^n Y_i$ and $\bar{X} = n^{-1}\sum_{i = 1}^n X_i$, respectively. The estimates of the other parameters are more complicated and are found by numerical maximization of the log-likelihood
+\[
+ -\frac{n}{2}\log \vert \Sigma\vert -\frac{1}{2}\mathrm{tr}\{(Y - X\beta)'(Y - X\beta) \Sigma^{-1}\} -\frac{n}{2}\log \vert \tau I_p + \Psi\vert - \frac{1}{2}\mathrm{tr}\{X' X(\Psi + \tau I_p)^{-1}\},
+\]
+where the $i$th rows of $Y \in \mathbb{R}^{n\times r}$ and $X \in \mathbb{R}^{n\times p}$ are, respectively, $Y_i - \bar{Y}$ and $X_i - \bar{X}$.
+
+
+
+
+
+

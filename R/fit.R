@@ -17,12 +17,10 @@
 #' @param rho Numeric ridge penalty on alpha in representation beta = L alpha
 #' @param tol Numeric tolerance for L-BFGS-B on profile log-likelihood
 #' @param maxit Integer maximum number of iterations of L-BFGS-B algorithm
-#' @param mean_Y If TRUE, the mean of Y is estimated; otherwise it's assumed
-#'               zero.
-#' @param mean_X If TRUE, the mean of X is estimated; otherwise it's assumed
-#'               zero.         
-#' @param scale If TRUE, each predictor is scaled by 1 / sample standard
-#'              deviation.
+#' @param center_Y If TRUE, responses are centered by their sample average.
+#' @param center_X If TRUE, predictors are centered by their sample average.     
+#' @param scale_Y If TRUE, responses are scaled to have unit sample standard deviation.
+#' @param scale_X If TRUE, predictors are scaled to have unit sample standard deviation.
 #' @param quiet If TRUE, suppresses information from optim (L-BFGS-B)
 #' @param L Matrix (p x k) starting value in L-BFGS-B for the Cholesky root
 #'          in the decomposition Sigma_X = tau (I + LL')
@@ -63,16 +61,24 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   
   mu_Y <- rep(0, ncol(Y))
   mu_X <- rep(0, ncol(X))
-  if(mean_Y){
-    Y <- scale(Y, scale = F)
-    mu_Y <- attr(Y, "scaled:center")
+  if(center_Y){
+    mu_Y <- colMeans(Y)
+    Y <- sweep(Y, 2, mu_Y)
   }
-  if(mean_X){
-    X <- scale(X, scale = F)
-    mu_X <- attr(X, "scaled:center")
+  if(center_X){
+   mu_X <- colMeans(X)
+   X <- sweep(X, 2, mu_X)
   }
-  
-  if(scale) X <- scale(X, center = F)
+  s_Y <- rep(1, r)
+  if(scale_Y){
+    s_Y <- apply(Y, sd, 2)
+    Y <- sweep(Y, 2, 1 / s_Y, FUN = "*")
+  }
+  s_X <- rep(1, p)
+  if(scale_X){
+    s_X <- apply(X, sd, 2)
+    X <- sweep(X, 2, 1 / s_X, FUN = "*")
+  }
   
   if(max(k) >= min(n, p)) stop("tpcr requires k < min(n, p)")
   if(missing(L)){
@@ -124,36 +130,46 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   ############################################################################
   L <- update_L(L = L, Y = Y, X = X, rho = rho, tol = tol, maxit = maxit,
                   quiet = quiet)
-  Z <- X %*% L
-  alpha <- solve(crossprod(Z) + rho * crossprod(L), crossprod(Z, Y))
-  Sigma <- crossprod(Y - Z %*% alpha) / n
+  sL <- svd(L)
+  U <- sL$u
+  d <- sL$d^2
+  
+  Z <- X %*% U
+  gam <- solve(crossprod(Z) + diag(rho, k), crossprod(Z, Y))
+  Sigma <- crossprod(Y - Z %*% gam) / n
   tau <- sum(X^2) -  sum(t(X) * (L %*% qr.solve(diag(1, k) +
                                                crossprod(L), t(L)) %*% t(X)))
   tau <- tau / (n * p)
-
-  beta <-  L %*% alpha
-  Sigma_X <- tau * (diag(1, p) + tcrossprod(L))
+  d <- d * tau
+  Psi <- U %*% diag(d, k) %*% t(U)
+  beta <-  U %*% gam
+  Sigma_X <- diag(tau, p) + Psi
   
-  n_param <- r * (r + 1) / 2 # Error cov. mat.
-  n_param <- n_param + k * r # alpha
+  if(scale_Y){
+    Sigma <- sweep(Sigma, 2, s_Y, fun = "*")
+    Sigma <- sweep(Sigma, 1, s_Y, fun = "*")
+    beta <-  sweep(beta, 2, s_Y, fun = "*")
+  }
+  if(scale_X){
+    Sigma_X <- sweep(Sigma_X, 2, s_X, fun = "*")
+    Sigma_X <- sweep(Sigma_X, 1, s_X, fun = "*")
+    beta <-    sweep(beta, 1, 1 / s_Y, fun = "*")
+  }
+  
+  n_param <- r * (r + 1) / 2 # Sigma
+  n_param <- n_param + k * r # gamma
   n_param <- n_param + 1 # tau
-  n_param <- n_param + k + k * p - k * (k + 1) / 2 #SPSD rank k
-  if(mean_Y) n_param <- n_param + r # Intercept
-  if(mean_X) n_param <- n_param + p # Predictor mean
+  n_param <- n_param + k + k * p - k * (k + 1) / 2 #Psi
+  if(center_Y) n_param <- n_param + r # Intercept
+  if(center_X) n_param <- n_param + p # Predictor mean
   # k eigenvalues, k orthonormal vectors requires (p - 1) + (p - 2) ... (p - k)
   # = k + kp - sum_i^k i = k + kp - k(k + 1) / 2
   IC <-  sum(mvtnorm::dmvnorm(Y -  X %*% beta, sigma = Sigma, log = T))
   IC <- IC + sum(mvtnorm::dmvnorm(X, sigma = Sigma_X, log = T))
   IC <- -2 * IC + m * n_param
   
-  # Asy. Cov.
-  C <- matrix(NA, r*p, r*p)
-  if(covmat){
-    P <- tcrossprod(svd(L)$u)
-    C <-  kronecker(Sigma, P %*% qr.solve(Sigma_X, P))
-  }
-  
   return(list(mu_Y = mu_Y, mu_X = mu_X, beta = beta,
-              Sigma = Sigma, Sigma_X = tau * (diag(1, p) + tcrossprod(L)),
-              L = L, tau = tau, IC = IC, C = C))
+              Sigma = Sigma,  Sigma_X = Sigma_X,
+              d = d,
+              IC = IC, C = C))
 }

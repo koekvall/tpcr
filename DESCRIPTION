@@ -9,5 +9,7 @@ Description: Fits a principal components regression model using a jointly normal
 License: MIT + file LICENSE
 Imports: Rcpp (>= 1.0.0), mvtnorm
 LinkingTo: Rcpp, RcppArmadillo
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
 Encoding: UTF-8
 RoxygenNote: 7.1.1
