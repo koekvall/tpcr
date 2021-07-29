@@ -27,14 +27,7 @@
 #' @param m Numeric penalty in information criterion
 #'          - 2 * log-likelihood + m * n_params; can be a vector
 #' @param covmat If TRUE, calculates asymptotic covariance matrix of vec(beta)
-#' @return If length(k) = 1, returns a list with estimates:
-#'          beta (regression coefficient),
-#'          Sigma (response covariance matrix),
-#'          Sigma_X (predictor covariance matrix),
-#'          L (Cholesky root in decomposition Sigma_X = tau[I + LL']),
-#'          tau (smallest eigenvalue of Sigma_X; has multiplicity p - k),
-#'          IC (information criterion), and
-#'          C (covariance matrix of vectorization of beta estimator).
+#' @return If length(k) = 1, returns a list with estimates and information criterion.
 #'          
 #'         If length(k) > 1, returns a list of lists of length k + 1 where for
 #'         j in 1:k the jth element is the list returned by tpcr with k = k[j]
@@ -44,8 +37,9 @@
 #' @importFrom Rcpp sourceCpp
 #' @importFrom Rcpp evalCpp
 #' @export
-tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
-  mean_X = TRUE, scale = FALSE, quiet = TRUE, L, m = 2, covmat = TRUE)
+tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center_Y = TRUE,
+  center_X = TRUE, scale_Y = FALSE, scale_X = FALSE, quiet = TRUE, L, m = 2,
+  covmat = FALSE)
 {
   Y <- as.matrix(Y)
   X <- as.matrix(X)
@@ -59,25 +53,25 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
     warning("The objective function is unbounded when n < p and rho = 0; do not expect reliable estimates!")
   }
   
-  mu_Y <- rep(0, ncol(Y))
-  mu_X <- rep(0, ncol(X))
+  ybar <- rep(0, ncol(Y))
+  xbar <- rep(0, ncol(X))
   if(center_Y){
-    mu_Y <- colMeans(Y)
-    Y <- sweep(Y, 2, mu_Y)
+    ybar <- colMeans(Y)
+    Y <- sweep(Y, 2, ybar)
   }
   if(center_X){
-   mu_X <- colMeans(X)
-   X <- sweep(X, 2, mu_X)
+   xbar <- colMeans(X)
+   X <- sweep(X, 2, xbar)
   }
-  s_Y <- rep(1, r)
+  sy <- rep(1, r)
   if(scale_Y){
-    s_Y <- apply(Y, sd, 2)
-    Y <- sweep(Y, 2, 1 / s_Y, FUN = "*")
+    sy <- apply(Y, 2, stats::sd)
+    Y <- sweep(Y, 2, 1 / sy, FUN = "*")
   }
-  s_X <- rep(1, p)
+  sx <- rep(1, p)
   if(scale_X){
-    s_X <- apply(X, sd, 2)
-    X <- sweep(X, 2, 1 / s_X, FUN = "*")
+    sx <- apply(X,  2, stats::sd)
+    X <- sweep(X, 2, 1 / sx, FUN = "*")
   }
   
   if(max(k) >= min(n, p)) stop("tpcr requires k < min(n, p)")
@@ -105,8 +99,9 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
     ii <- 1
     for(k_i in k){
       out_list[[ii]] <- tpcr(Y = Y, X = X, k = k_i, rho = rho, tol = tol,
-                              maxit = maxit, mean_Y = mean_Y, mean_X = mean_X,
-                              scale = scale, quiet = quiet, L = L, m = m)
+                              maxit = maxit, center_Y = center_Y,
+                             center_X = center_X, scale_Y = scale_Y,
+                             scale_X = scale_X, quiet = quiet, L = L, m = m)
       
       # New starting value; use directions of first sample evecs not in span
       if(ii == length(k)) break #  No starting values for next iter
@@ -146,14 +141,14 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   Sigma_X <- diag(tau, p) + Psi
   
   if(scale_Y){
-    Sigma <- sweep(Sigma, 2, s_Y, fun = "*")
-    Sigma <- sweep(Sigma, 1, s_Y, fun = "*")
-    beta <-  sweep(beta, 2, s_Y, fun = "*")
+    Sigma <- sweep(Sigma, 2, sy, FUN = "*")
+    Sigma <- sweep(Sigma, 1, sy, FUN = "*")
+    beta <-  sweep(beta, 2, sy, FUN = "*")
   }
   if(scale_X){
-    Sigma_X <- sweep(Sigma_X, 2, s_X, fun = "*")
-    Sigma_X <- sweep(Sigma_X, 1, s_X, fun = "*")
-    beta <-    sweep(beta, 1, 1 / s_Y, fun = "*")
+    Sigma_X <- sweep(Sigma_X, 2, sx, FUN = "*")
+    Sigma_X <- sweep(Sigma_X, 1, sx, FUN = "*")
+    beta <-    sweep(beta, 1, 1 / sx, FUN = "*")
   }
   
   n_param <- r * (r + 1) / 2 # Sigma
@@ -168,8 +163,16 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, mean_Y = TRUE,
   IC <- IC + sum(mvtnorm::dmvnorm(X, sigma = Sigma_X, log = T))
   IC <- -2 * IC + m * n_param
   
-  return(list(mu_Y = mu_Y, mu_X = mu_X, beta = beta,
+  C <- NULL
+  if(covmat){
+    if(scale_X){
+      U <-  sweep(U, 1, sx, FUN = "*")
+    } 
+    C <- kronecker(Sigma, U %*% ((1 / (d + tau)) * t(U)))
+  }
+  
+  return(list(ybar = ybar, xbar = xbar, b = beta,
               Sigma = Sigma,  Sigma_X = Sigma_X,
               d = d,
-              IC = IC, C = C))
+              IC = IC, cov_b = C))
 }

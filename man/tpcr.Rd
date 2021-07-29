@@ -11,13 +11,14 @@ tpcr(
   rho = 0,
   tol = 1e-10,
   maxit = 1000,
-  mean_Y = TRUE,
-  mean_X = TRUE,
-  scale = FALSE,
+  center_Y = TRUE,
+  center_X = TRUE,
+  scale_Y = FALSE,
+  scale_X = FALSE,
   quiet = TRUE,
   L,
   m = 2,
-  covmat = TRUE
+  covmat = FALSE
 )
 }
 \arguments{
@@ -33,14 +34,13 @@ tpcr(
 
 \item{maxit}{Integer maximum number of iterations of L-BFGS-B algorithm}
 
-\item{mean_Y}{If TRUE, the mean of Y is estimated; otherwise it's assumed
-zero.}
+\item{center_Y}{If TRUE, responses are centered by their sample average.}
 
-\item{mean_X}{If TRUE, the mean of X is estimated; otherwise it's assumed
-zero.}
+\item{center_X}{If TRUE, predictors are centered by their sample average.}
 
-\item{scale}{If TRUE, each predictor is scaled by 1 / sample standard
-deviation.}
+\item{scale_Y}{If TRUE, responses are scaled to have unit sample standard deviation.}
+
+\item{scale_X}{If TRUE, predictors are scaled to have unit sample standard deviation.}
 
 \item{quiet}{If TRUE, suppresses information from optim (L-BFGS-B)}
 
@@ -53,14 +53,7 @@ in the decomposition Sigma_X = tau (I + LL')}
 \item{covmat}{If TRUE, calculates asymptotic covariance matrix of vec(beta)}
 }
 \value{
-If length(k) = 1, returns a list with estimates:
-         beta (regression coefficient),
-         Sigma (response covariance matrix),
-         Sigma_X (predictor covariance matrix),
-         L (Cholesky root in decomposition Sigma_X = tau[I + LL']),
-         tau (smallest eigenvalue of Sigma_X; has multiplicity p - k),
-         IC (information criterion), and
-         C (covariance matrix of vectorization of beta estimator).
+If length(k) = 1, returns a list with estimates and information criterion.
          
         If length(k) > 1, returns a list of lists of length k + 1 where for
         j in 1:k the jth element is the list returned by tpcr with k = k[j]

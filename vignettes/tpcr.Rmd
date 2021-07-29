@@ -20,7 +20,7 @@ It is common to use standardized data. Then, the model is assumed to hold with $
   D_Y^{-1}(Y_i - \mu) = \beta' D_{X}^{-1}(X_i - \mu_X) + \varepsilon_i \iff (Y_i - \mu) = D_Y\beta' D_{X}^{-1}(X_i - \mu_X) + D_Y \varepsilon_i
 \]
 
-Thus, if $\tilde{beta}$, $\tilde{\Sigma}$, and $\tilde{\Sigma}_X$ are estimates from fitting the model with standardized data, estimates on the original scale can be obtained as $\hat{\beta} = D_X^{-1}\tilde{\beta} D_Y$, $\hat{\Sigma} = D_Y \tilde{\Sigma} D_Y$, and $\hat{\Sigma}_X = D_X \Sigma_X D_X$. Note, however, that this in general does not give a spiked $\hat{\Sigma}_X$.
+Thus, if $\tilde{\beta}$, $\tilde{\Sigma}$, and $\tilde{\Sigma}_X$ are estimates from fitting the model with standardized data, estimates on the original scale can be obtained as $\hat{\beta} = D_X^{-1}\tilde{\beta} D_Y$, $\hat{\Sigma} = D_Y \tilde{\Sigma} D_Y$, and $\hat{\Sigma}_X = D_X \Sigma_X D_X$. Note, however, that this in general does not give a spiked $\hat{\Sigma}_X$.
 
 The package <tt>tpcr</tt> fits the parameters of this model using a multivariate normal likelihood. The estimates of $\mu_Y$ and $mu_X$ are $\bar{Y} = n^{-1}\sum_{i = 1}^n Y_i$ and $\bar{X} = n^{-1}\sum_{i = 1}^n X_i$, respectively. The estimates of the other parameters are more complicated and are found by numerical maximization of the log-likelihood
 \[
