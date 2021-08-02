@@ -27,7 +27,9 @@
 #' @param m Numeric penalty in information criterion
 #'          - 2 * log-likelihood + m * n_params; can be a vector
 #' @param covmat If TRUE, calculates asymptotic covariance matrix of vec(beta)
+#' @param Xnew Matrix of new observations to predict the response for
 #' @return If length(k) = 1, returns a list with estimates and information criterion.
+#'         If scale_X or scale_Y are TRUE, estimates are rescaled to original scale.
 #'          
 #'         If length(k) > 1, returns a list of lists of length k + 1 where for
 #'         j in 1:k the jth element is the list returned by tpcr with k = k[j]
@@ -39,22 +41,61 @@
 #' @export
 tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center_Y = TRUE,
   center_X = TRUE, scale_Y = FALSE, scale_X = FALSE, quiet = TRUE, L, m = 2,
-  covmat = FALSE)
+  covmat = FALSE, Xnew = X)
 {
-  Y <- as.matrix(Y)
-  X <- as.matrix(X)
-  # Define constants
+  #############################################################################
+  # Argument checking and starting values
+  #############################################################################
+  stopifnot(is.matrix(X))
   k <- sort(k)
+  num_k <- length(k)
+  stopifnot(is.numeric(k), is.null(dim(k)), all(k == floor(k)))
   p <- ncol(X)
   n <- nrow(X)
+  if(k[num_k] >= min(n, p)) stop("tpcr requires k < min(n, p)")
+  
+  stopifnot(is.numeric(Y))
+  if(!is.matrix(Y)){
+    Y <- matrix(Y, nrow = n)
+  }
   r <- ncol(Y)
-
+  stopifnot(is.numeric(rho), length(rho) == 1, rho >= 0)
   if(n < p & rho == 0){
-    warning("The objective function is unbounded when n < p and rho = 0; do not expect reliable estimates!")
+    warning("The objective function is unbounded when n < p and rho = 0;
+            do not expect reliable estimates!")
+  }
+  stopifnot(is.numeric(tol), length(tol) == 1, tol > 0)
+  stopifnot(is.numeric(maxit), length(maxit) == 1, maxit > 0, maxit == floor(maxit))
+  stopifnot(is.logical(center_Y), length(center_Y) == 1)
+  stopifnot(is.logical(center_X), length(center_X) == 1)
+  stopifnot(is.logical(scale_Y), length(scale_Y) == 1)
+  stopifnot(is.logical(scale_X), length(scale_X) == 1)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
+  # Get starting value
+  if(missing(L) | num_k > 1){
+    e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
+  }
+  if(missing(L)){
+    # Use probabilistic principal components estimates
+    U <- e_S$vectors[, 1:k[1], drop = F]
+    tau <- mean(e_S$values[(k[1] + 1):p])
+    D <- e_S$values[1:k[1]] / tau - 1
+    L <- chol_spsd(U %*% diag(D, k[1]) %*% t(U) , tol = 1e-8)$L
+    L <- L[, 1:k[1], drop = F]
+    rm(D, tau, U)
+  } else{
+    stopifnot(is.matrix(L), ncol(L) == k, nrow(L) == p)
   }
   
-  ybar <- rep(0, ncol(Y))
-  xbar <- rep(0, ncol(X))
+  stopifnot(is.numeric(m), is.null(dim(m)))
+  stopifnot(is.logical(covmat), length(covmat) == 1)
+  stopifnot(is.matrix(Xnew), ncol(Xnew) == p)
+
+  #############################################################################
+  # Scale data if required
+  #############################################################################
+  ybar <- rep(0, r)
+  xbar <- rep(0, p)
   if(center_Y){
     ybar <- colMeans(Y)
     Y <- sweep(Y, 2, ybar)
@@ -74,105 +115,88 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center_Y = TRUE,
     X <- sweep(X, 2, 1 / sx, FUN = "*")
   }
   
-  if(max(k) >= min(n, p)) stop("tpcr requires k < min(n, p)")
-  if(missing(L)){
-    # Use probabilistic principal components estimates
-    e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
-
-    U <- e_S$vectors[, 1:k[1], drop = F]
-    tau <- mean(e_S$values[(k[1] + 1):p])
-    D <- e_S$values[1:k[1]] / tau - 1
-    L <- chol_spsd(U %*% diag(D, k[1]) %*% t(U) , tol = 1e-8)$L
-    L <- L[, 1:k[1], drop = F]
-    rm(D, tau, U)
-  }
-  L <- matrix(L, ncol = k[1])
-  
-  ############################################################################
-  # Cycle through k
-  ############################################################################
-  if(length(k) > 1){
-    if(missing(e_S)){
-      e_S <- eigen(crossprod(X) / n, symmetric = TRUE)
-    }
-    out_list <- list()
-    ii <- 1
-    for(k_i in k){
-      out_list[[ii]] <- tpcr(Y = Y, X = X, k = k_i, rho = rho, tol = tol,
-                              maxit = maxit, center_Y = center_Y,
-                             center_X = center_X, scale_Y = scale_Y,
-                             scale_X = scale_X, quiet = quiet, L = L, m = m)
-      
-      # New starting value; use directions of first sample evecs not in span
-      if(ii == length(k)) break #  No starting values for next iter
-      s_L <- svd(out_list[[ii]]$L)
-      u_new <- e_S$vectors[, 1:(k[ii + 1] - k_i), drop = F] - 
-        s_L$u %*% crossprod(s_L$u, e_S$vectors[, 1:(k[ii + 1] - k_i), drop = F])
-      u_new <- scale(u_new, center = F, scale = apply(u_new, 2, function(x)sqrt(sum(x^2))))
-      U_hat <- cbind(s_L$u, u_new)
-      L <- chol_spsd(U_hat %*% diag(c(s_L$d^2, rep(s_L$d[k_i]^2, k[ii + 1] - k_i)), k[ii + 1]) %*%
-                       t(U_hat), tol = 1e-8)$L[, 1:k[ii + 1]]
-      ii <- ii + 1
-    }
-    all_IC <- do.call(rbind, lapply(out_list, function(x)x$IC))
-    out_list[[ii + 1]] <- k[as.vector(apply(all_IC, 2, which.min))]
-    names(out_list) <- c(paste0("fit_k_", k), "k_star")
-    return(out_list)
-  }
-  
-  ############################################################################
-  # Find Estimates
-  ############################################################################
-  L <- update_L(L = L, Y = Y, X = X, rho = rho, tol = tol, maxit = maxit,
+  #############################################################################
+  # Fit model for each k_i in k
+  #############################################################################
+  out_list <- list()
+  for(ii in 1:num_k){
+    # Get estimates for possibly scaled data
+    L <- update_L(L = L, Y = Y, X = X, rho = rho, tol = tol, maxit = maxit,
                   quiet = quiet)
-  sL <- svd(L)
-  U <- sL$u
-  d <- sL$d^2
-  
-  Z <- X %*% U
-  gam <- solve(crossprod(Z) + diag(rho, k), crossprod(Z, Y))
-  Sigma <- crossprod(Y - Z %*% gam) / n
-  tau <- sum(X^2) -  sum(t(X) * (L %*% qr.solve(diag(1, k) +
-                                               crossprod(L), t(L)) %*% t(X)))
-  tau <- tau / (n * p)
-  d <- d * tau
-  Psi <- U %*% diag(d, k) %*% t(U)
-  beta <-  U %*% gam
-  Sigma_X <- diag(tau, p) + Psi
-  
-  if(scale_Y){
-    Sigma <- sweep(Sigma, 2, sy, FUN = "*")
-    Sigma <- sweep(Sigma, 1, sy, FUN = "*")
-    beta <-  sweep(beta, 2, sy, FUN = "*")
-  }
-  if(scale_X){
-    Sigma_X <- sweep(Sigma_X, 2, sx, FUN = "*")
-    Sigma_X <- sweep(Sigma_X, 1, sx, FUN = "*")
-    beta <-    sweep(beta, 1, 1 / sx, FUN = "*")
-  }
-  
-  n_param <- r * (r + 1) / 2 # Sigma
-  n_param <- n_param + k * r # gamma
-  n_param <- n_param + 1 # tau
-  n_param <- n_param + k + k * p - k * (k + 1) / 2 #Psi
-  if(center_Y) n_param <- n_param + r # Intercept
-  if(center_X) n_param <- n_param + p # Predictor mean
-  # k eigenvalues, k orthonormal vectors requires (p - 1) + (p - 2) ... (p - k)
-  # = k + kp - sum_i^k i = k + kp - k(k + 1) / 2
-  IC <-  sum(mvtnorm::dmvnorm(Y -  X %*% beta, sigma = Sigma, log = T))
-  IC <- IC + sum(mvtnorm::dmvnorm(X, sigma = Sigma_X, log = T))
-  IC <- -2 * IC + m * n_param
-  
-  C <- NULL
-  if(covmat){
+    sL <- svd(L)
+    U <- sL$u
+    d <- sL$d^2
+    Z <- X %*% U
+    gam <- solve(crossprod(Z) + diag(rho, k[ii]), crossprod(Z, Y))
+    Sigma <- crossprod(Y - Z %*% gam) / n
+    tau <- sum(X^2) -  sum(t(X) * (L %*% qr.solve(diag(1, k[ii]) +
+                                                  crossprod(L), t(L)) %*% t(X)))
+    tau <- tau / (n * p)
+    d <- d * tau
+    Psi <- U %*% diag(d, k[ii]) %*% t(U)
+    beta <-  U %*% gam
+    Sigma_X <- diag(tau, p) + Psi
+    
+    # Get information criteria for possibly scaled data
+    n_param <- r * (r + 1) / 2 # Sigma
+    n_param <- n_param + k[ii] * r # gamma
+    n_param <- n_param + 1 # tau
+    n_param <- n_param + k[ii] + k[ii] * p - k[ii] * (k[ii] + 1) / 2 #Psi
+    if(center_Y) n_param <- n_param + r # Intercept
+    if(center_X) n_param <- n_param + p # Predictor mean
+    # k eigenvalues, k orthonormal vectors requires (p - 1) + (p - 2) ... (p - k)
+    # = k + kp - sum_i^k i = k + kp - k(k + 1) / 2
+    IC <-  sum(mvtnorm::dmvnorm(Y -  X %*% beta, sigma = Sigma, log = T))
+    IC <- IC + sum(mvtnorm::dmvnorm(X, sigma = Sigma_X, log = T))
+    IC <- -2 * IC + m * n_param
+    
+    # Get get estimates on original scale for returning
+    if(scale_Y){
+      Sigma <- sweep(Sigma, 2, sy, FUN = "*")
+      Sigma <- sweep(Sigma, 1, sy, FUN = "*")
+      beta <-  sweep(beta, 2, sy, FUN = "*")
+    }
     if(scale_X){
-      U <-  sweep(U, 1, sx, FUN = "*")
-    } 
-    C <- kronecker(Sigma, U %*% ((1 / (d + tau)) * t(U)))
+      Sigma_X <- sweep(Sigma_X, 2, sx, FUN = "*")
+      Sigma_X <- sweep(Sigma_X, 1, sx, FUN = "*")
+      beta <-    sweep(beta, 1, 1 / sx, FUN = "*")
+    }
+    # Covariance of estimates on original scale
+    C <- NULL
+    if(covmat){
+      if(scale_X){
+        U <-  sweep(U, 1, sx, FUN = "*")
+      } 
+      C <- kronecker(Sigma, U %*% ((1 / (d + tau)) * t(U)))
+    }
+    # Prediction or fitted values on original scale
+    Yhat <- sweep(sweep(Xnew, 2, xbar) %*% beta, 2, ybar, FUN = "+")
+    # Return list for k_i
+    out_list[[ii]] <- list(ybar = ybar, xbar = xbar, b = beta,
+                           Sigma = Sigma,  Sigma_X = Sigma_X,
+                           IC = IC, cov_b = C, Yhat = Yhat, L = L)
+    # Starting value for next iter; use directions of first sample evecs not in span
+    if(ii < num_k){
+      u_new <- e_S$vectors[, 1:(k[ii + 1] - k[ii]), drop = F] - 
+        sL$u %*% crossprod(sL$u, e_S$vectors[, 1:(k[ii + 1] - k[ii]), drop = F])
+      u_new <- scale(u_new, center = F, scale = apply(u_new, 2,
+                                                      function(x)sqrt(sum(x^2))))
+      U_hat <- cbind(sL$u, u_new)
+      L <- chol_spsd(U_hat %*% diag(c(sL$d^2, rep(sL$d[k[ii]]^2,
+                       k[ii + 1] - k[ii])), k[ii + 1]) %*%
+                       t(U_hat), tol = 1e-8)$L[, 1:k[ii + 1]]
+    }
   }
-  
-  return(list(ybar = ybar, xbar = xbar, b = beta,
-              Sigma = Sigma,  Sigma_X = Sigma_X,
-              d = d,
-              IC = IC, cov_b = C))
+  #############################################################################
+  # Prepare return list
+  #############################################################################
+  if(num_k == 1){
+    out_list <- out_list[[1]]
+  } else{
+    browser()
+    all_IC <- do.call(rbind, lapply(out_list, function(x)x$IC))
+    out_list[[num_k + 1]] <- k[as.vector(apply(all_IC, 2, which.min))]
+    names(out_list) <- c(paste0("fit_k_", k), "k_star")
+  }
+  return(out_list)
 }

@@ -18,7 +18,8 @@ tpcr(
   quiet = TRUE,
   L,
   m = 2,
-  covmat = FALSE
+  covmat = FALSE,
+  Xnew = X
 )
 }
 \arguments{
@@ -51,9 +52,12 @@ in the decomposition Sigma_X = tau (I + LL')}
 - 2 * log-likelihood + m * n_params; can be a vector}
 
 \item{covmat}{If TRUE, calculates asymptotic covariance matrix of vec(beta)}
+
+\item{Xnew}{Matrix of new observations to predict the response for}
 }
 \value{
 If length(k) = 1, returns a list with estimates and information criterion.
+        If scale_X or scale_Y are TRUE, estimates are rescaled to original scale.
          
         If length(k) > 1, returns a list of lists of length k + 1 where for
         j in 1:k the jth element is the list returned by tpcr with k = k[j]
