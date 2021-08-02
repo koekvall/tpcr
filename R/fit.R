@@ -193,7 +193,6 @@ tpcr <- function(Y, X, k, rho = 0, tol = 1e-10, maxit = 1e3, center_Y = TRUE,
   if(num_k == 1){
     out_list <- out_list[[1]]
   } else{
-    browser()
     all_IC <- do.call(rbind, lapply(out_list, function(x)x$IC))
     out_list[[num_k + 1]] <- k[as.vector(apply(all_IC, 2, which.min))]
     names(out_list) <- c(paste0("fit_k_", k), "k_star")
