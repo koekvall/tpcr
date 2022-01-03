@@ -1,7 +1,7 @@
 #' Targeted Principal Components Regression
 #' 
 #' \code{tpcr} fits a principal components regression by maximizing a joint
-#'  multivariate normal pseud-likelihood.
+#'  multivariate normal pseudo-likelihood.
 #' 
 #' This is the only function exported from the package with the same name. 
 #' The likelihood maximized is that for n independent observations 
