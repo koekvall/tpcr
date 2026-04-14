@@ -1,6 +1,6 @@
 # tpcr (Targeted Principal Components Regression)
 
-A package for fitting a multivariate principal components regression by maximizing a jointly normal (pseudo-)likelihood.
+A package for fitting a multivariate principal components regression by maximizing a jointly normal (pseudo) likelihood.
 
 # Installation
 
