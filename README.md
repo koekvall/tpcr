@@ -10,15 +10,19 @@ install.packages("devtools")
 devtools::install_github("koekvall/tpcr")
 ```
 # Citation
-The corresponding paper is on [arXiv](https://arxiv.org/abs/2004.14009). 
+The corresponding paper is published in the [Journal of Multivariate Analysis](https://www.sciencedirect.com/science/article/pii/S0047259X22000318) (also available on [arXiv](https://arxiv.org/abs/2004.14009)).
 
-A bibtex entry is
+A BibTeX entry is
 
-@misc{ekvall2021targeted,
-      title={Targeted Principal Components Regression}, 
-      author={Karl Oskar Ekvall},
-      year={2021},
-      eprint={2004.14009},
-      archivePrefix={arXiv},
-      primaryClass={stat.ME}
+```bibtex
+@article{ekvall2022targeted,
+  title={Targeted principal components regression},
+  author={Ekvall, Karl Oskar},
+  journal={Journal of Multivariate Analysis},
+  volume={190},
+  pages={104973},
+  year={2022},
+  publisher={Elsevier},
+  doi={10.1016/j.jmva.2022.104973}
 }
+```

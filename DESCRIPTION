@@ -6,6 +6,7 @@ Date: 2021-07-23
 Author: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
 Maintainer: Karl Oskar Ekvall <k.o.ekvall@gmail.com>
 Description: Fits a principal components regression model using a jointly normal (pseudo-)likelihood.
+URL: https://github.com/koekvall/tpcr, https://doi.org/10.1016/j.jmva.2022.104973
 License: MIT + file LICENSE
 Imports: Rcpp (>= 1.0.0), mvtnorm
 LinkingTo: Rcpp, RcppArmadillo
